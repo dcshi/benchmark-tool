@@ -1,0 +1,41 @@
+Usage: 
+benchmark [-h <host>] [-p <port>] [-c <clients>] [-n <requests]> [-r] [-k] [-u]
+ -h <host> Server ip (default 127.0.0.1)
+ -p <port> Server port (default 5113)
+ -c <clients> Number of parallel connections (default 5)
+ -n <requests> Total number of requests (default 50)
+ -k keep alive or reconnect (default is reconnect)
+ -r re-encode sendbuf per request (default is no encode)
+ -u benchmark with udp protocol(default is tcp)
+
+for example:
+dc@ubuntu:~/benchmark$ ./benchmark -c 50 -n 1000 -p 80  -k
+keepAlive is open
+50 parallel clients
+1000 completed in 0 seconds
+78.6% <= 1 milliseconds
+100% <= 1 milliseconds
+1000 requests are neend
+1035 requests are sended
+0 clients are timeout
+999 clients are reset
+50 clients are created
+21 total milliseconds used
+47619 requests per second
+
+How to make a test use case?
+1.mkdir module
+2.create a cpp file that include "module.h" , overload the encodeRequest and decodeResponse function.
+/*
+* encode success return the data len
+* encode fail return -1
+*/
+int encodeRequest(char* data, int maxLen);
+
+/*
+* decode success return 0
+* decode fail return -1
+* not a complete package(tcp is stream), need wait more data return 1
+*/
+int decodeResponse(char* data, int len);
+
