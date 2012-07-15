@@ -304,15 +304,16 @@ int delEvent(client* c, int mask, benchConfig* conf)
 	return epoll_ctl(conf->el->epfd, op, c->fd, &e);
 }
 
-void closeConnection(benchConfig* conf, int fd)
+void closeConnection(benchConfig* conf, client* c)
 {
-	close(fd);
-
-	conf->liveClientNum--;
-
 	struct epoll_event e;
 	e.events = 0;
-	epoll_ctl(conf->el->epfd, EPOLL_CTL_DEL, fd, &e);
+	epoll_ctl(conf->el->epfd, EPOLL_CTL_DEL, c->fd, &e);
+
+	close(c->fd);
+	c->fd = -1;
+
+	conf->liveClientNum--;
 }
 
 void resetClient(client* c)
@@ -352,7 +353,7 @@ void clientDone(client* c)
 	}
 	else
 	{
-		closeConnection(&config, c->fd);
+		closeConnection(&config, c);
 		createClient();
 	}
 }
@@ -387,7 +388,7 @@ int recvFromServer(void* cl)
 			}
 			else
 			{
-				closeConnection(&config, c->fd);
+				closeConnection(&config, c);
 				createClient();
 				return -1;
 			}
@@ -395,7 +396,7 @@ int recvFromServer(void* cl)
 		else if(received == 0)
 		{
 			//peer closed
-			closeConnection(&config, c->fd);
+			closeConnection(&config, c);
 			createClient();
 			return -1;
 		}
@@ -416,7 +417,7 @@ int recvFromServer(void* cl)
 	int ret = decodeResponse(c->recvBuf, c->recvBufLen);
 	if(ret < 0)
 	{
-		closeConnection(&config, c->fd);
+		closeConnection(&config, c);
 		createClient();
 		return -1;
 	}
@@ -635,7 +636,7 @@ void clearTimeoutConnection(benchConfig* conf, uint64_t curTime)
 	for(unsigned i = 0; i< conf->needClientNum; i++)
 	{
 		client* c = conf->clients + i;
-		if((c->touchTime + timeout) <= curTime)
+		if(c->fd > 0 && (c->touchTime + timeout) <= curTime)
 		{
 			conf->timeoutClientNum++;
 			resetClient(c);
@@ -673,7 +674,7 @@ void benchmark()
 					cout<<"the network is so poor,check it and try again."<<endl;
 					exit(0);
 				}
-				closeConnection(&config, c->fd);
+				closeConnection(&config, c);
 				createClient();			
 				continue;
 			}
