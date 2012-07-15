@@ -450,7 +450,7 @@ int sendToServer(void* cl)
 	int sended;
 	while(1)
 	{   
-		sended = write(c->fd, c->sendBuf, c->sendBufLen);
+		sended = write(c->fd, c->sendBuf + c->sendedLen, c->sendBufLen - c->sendedLen);
 		if(sended <= 0 ) 
 		{   
 			if (errno == EINTR)
@@ -613,10 +613,10 @@ void showReport()
 	qsort(config.latency, config.doneRequests, sizeof(uint64_t), compareLatency);
 
 	for (i = 0; i < config.doneRequests; i++) {
-		if (config.latency[i]/1000 != curlat || i == (config.doneRequests-1)) {
-			curlat = config.latency[i]/1000;
+		if (config.latency[i]/10000 != curlat || i == (config.doneRequests-1)) {
+			curlat = config.latency[i]/10000;
 			perc = ((float)(i+1)*100)/config.doneRequests;
-			cout<<perc<<"% <= "<<curlat<<" milliseconds"<<endl;
+			cout<<perc<<"% <= "<<curlat*10<<" milliseconds"<<endl;
 		}
 	}
 
@@ -635,7 +635,7 @@ void clearTimeoutConnection(benchConfig* conf, uint64_t curTime)
 	for(unsigned i = 0; i< conf->needClientNum; i++)
 	{
 		client* c = conf->clients + i;
-		if((c->startTime + timeout) <= curTime)
+		if((c->touchTime + timeout) <= curTime)
 		{
 			conf->timeoutClientNum++;
 			resetClient(c);
