@@ -347,7 +347,8 @@ void clientDone(client* c)
 		return;
 	}
 
-	if(config.keepalive)
+	//there is no need to re-create a udp socket
+	if(config.keepalive || config.protocol == PROTOCOL_UDP)
 	{
 		resetClient(c);
 	}
@@ -364,7 +365,7 @@ int recvFromServer(void* cl)
     c->touchTime = usTime();
 
     /* Calculate latency only for the first read event. This means that the 
-     * server already sent the reply and we need to parse it. Parsing overhead                                            
+     * server already sent the reply and we need to parse it. Parsing overhead                                       
      * is not part of the latency, so calculate it only once, here. */
 	if(c->latency < 0)
 		c->latency = usTime() - c->startTime;
@@ -477,17 +478,15 @@ int sendToServer(void* cl)
 int setNonBlock(int fd)
 {
 	int flag;
+
 	if((flag = fcntl(fd, F_GETFL, 0)) == -1)
-	{
-		//log
 		return -1;
-	}
+
 	flag |= O_NONBLOCK;
+
 	if(fcntl(fd, F_SETFL, flag) == -1)
-	{
-		//log
 		return -1;
-	}
+
 	return 0;
 
 }
@@ -495,11 +494,10 @@ int setNonBlock(int fd)
 int setTcpNoDelay(int fd)
 {
 	int yes = 1;
+
 	if (setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &yes, sizeof(yes)) == -1) 
-	{
-		//log
 		return -1;
-	}
+
 	return 0;
 }
 
@@ -545,8 +543,6 @@ int createClient()
 	c = config.clients + fd % config.needClientNum;
 	c->fd = fd;
 	c->mask = ENONE;
-	//memset(c->sendBuf, 0, sizeof(c->sendBuf));
-	//memset(c->recvBuf, 0, sizeof(c->recvBuf));
 	
 	c->sendBufLen = encodeRequest(c->sendBuf, sizeof(c->sendBuf));
     if (c->sendBufLen < 0) 
@@ -658,7 +654,7 @@ void benchmark()
 		int num;
 		num = epoll_wait(config.el->epfd, config.el->events, config.needClientNum+1, 2000);
 
-        //update touch time per loop
+        //update global time per loop
         touchTime();
 
 		for(int i = 0 ;i< num; i++)
