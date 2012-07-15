@@ -140,7 +140,7 @@ uint64_t msTime()
     if (_tv.tv_sec == 0)
 	    gettimeofday(&_tv, NULL);
 
-	msec = ((long)_tv.tv_sec*1000);
+	msec = ((long)_tv.tv_sec*1000LL);
 	msec += _tv.tv_usec/1000;
 
 	return msec;
@@ -153,7 +153,7 @@ uint64_t usTime()
     if (_tv.tv_sec == 0)
 	    gettimeofday(&_tv, NULL);
 
-	usec = ((uint64_t)_tv.tv_sec)*1000000;
+	usec = ((uint64_t)_tv.tv_sec)*1000000LL;
 	usec += _tv.tv_usec;
 
 	return usec;
@@ -371,8 +371,8 @@ int recvFromServer(void* cl)
 		c->latency = usTime() - c->startTime;
 
 	//Calculate from the first response 
-//	if (config.startTime == 0)
-//		config.startTime = msTime();
+	//if (config.startTime == 0)
+	//	config.startTime = msTime();
 
 	while(1)
 	{
@@ -459,7 +459,16 @@ int sendToServer(void* cl)
 			{   
 				continue;
 			}   
-			return -1;
+			else if(errno == EWOULDBLOCK || errno == EAGAIN)
+			{
+				return 1;
+			}
+			else
+			{
+				closeConnection(&config, c);
+				createClient();
+				return -1;
+			}
 		}   
 		break;
 	}
