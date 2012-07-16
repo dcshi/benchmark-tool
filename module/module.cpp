@@ -15,7 +15,7 @@ int encodeRequest(char* data, int maxLen)
     //只做一次初始化
     if (ptr == NULL)
     {
-        sprintf(buf, "%s%s%s%s%s%s%s%s%s%s%s",
+        sprintf(buf, "%s%s%s%s%s%s%s%s%s%s",
                 "GET /lp?id=641023139&type=12&callback=callbackarea&rot=1 HTTP/1.1\r\n",
                 "Host: xx.com\r\n",
                 "Connection: keep-alive\r\n",

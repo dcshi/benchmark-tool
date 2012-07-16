@@ -615,17 +615,24 @@ void showReport()
 	cout<<config.doneRequests<<" completed in "<<totalTime/1000<<" seconds"<<endl;
 
 	unsigned i, curlat = 0;
+	uint64_t total_lat = 0;
+	uint64_t avg_lat = 0;
 	float perc;
 	qsort(config.latency, config.doneRequests, sizeof(uint64_t), compareLatency);
 
 	for (i = 0; i < config.doneRequests; i++) {
+		
+		total_lat += config.latency[i]/1000LL;
+
 		if (config.latency[i]/10000 != curlat || i == (config.doneRequests-1)) {
 			curlat = config.latency[i]/10000;
 			perc = ((float)(i+1)*100)/config.doneRequests;
-			cout<<perc<<"% <= "<<curlat*10<<" milliseconds"<<endl;
+			cout<<perc<<"% <= "<<config.latency[i]/1000<<" milliseconds"<<endl;
 		}
 	}
+	avg_lat = total_lat/config.doneRequests;
 
+	cout<<avg_lat<<" ms average latency"<<endl;
 	cout<<config.needRequestNum<<" requests are neend"<<endl;
 	cout<<config.totalRequests<<" requests are sended"<<endl;
 	cout<<config.timeoutClientNum<< " clients are timeout"<<endl;
